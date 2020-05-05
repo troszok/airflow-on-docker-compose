@@ -1,0 +1,34 @@
+version: '2.1'
+services:
+    postgres:
+        image: postgres:9.6
+        environment:
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflow
+            - POSTGRES_DB=airflow
+    webserver:
+        image: puckel/docker-airflow:1.10.9
+        restart: always
+        mem_limit: 8000m
+        depends_on:
+            - postgres
+        env_file:
+            - .env
+        environment:
+            - LOAD_EX=n
+            - EXECUTOR=Local
+        volumes:
+            - ./dags:/usr/local/airflow/dags
+            - ./test:/usr/local/airflow/test
+            - ./plugins:/usr/local/airflow/plugins
+            # Uncomment to include custom plugins
+            - ./requirements.txt:/requirements.txt
+            - ~/.aws:/usr/local/airflow/.aws
+        ports:
+            - "8080:8080"
+        command: webserver
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
